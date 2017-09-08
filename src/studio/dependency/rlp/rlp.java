@@ -10,60 +10,89 @@ package studio.dependency.rlp;
  * @author Bhaskar Singh
  */
 public class rlp {
-    public static byte[] encode(byte byt){
-        if((byt & 0xFF) == byt){
-            System.out.print("single byte" );
+
+    private static byte[] int2byte(
+            int number) {
+        if ((number & 0xFF) == number) {
+            return new byte[]{(byte) (number)};
+        }
+        if ((number & 0xFFFF) == number) {
+            return new byte[]{(byte) (number >>> 8),
+                (byte) (number)};
+        }
+        if ((number & 0xFFFFFF) == number) {
+            return new byte[]{(byte) (number >>> 16),
+                (byte) (number >>> 8),
+                (byte) (number)};
+        }
+        if ((number & 0xFFFFFFFF) == number) {
+            return new byte[]{(byte) (number >>> 24),
+                (byte) (number >>> 16),
+                (byte) (number >>> 8),
+                (byte) (number)};
+        } else {
+            return new byte[]{(byte) (0)};
+        }
+    }
+
+    public static byte[] encode(byte[] bytAry) {
+        if (bytAry.length <= 1) {
             //Comfirmed single byte, Now check if it is zero
-            if((byt & 0xFF) == 0){
+            if ((bytAry[0] & 0xFF) == 0) {
                 return new byte[]{(byte) 0x80};
-            }
-            else if((byt & 0xFF) <= 0x7F){ 
+            } else if ((bytAry[0] & 0xFF) <= 0x7F) {
                 //if we reach here we confirm that number belowns to [0,127] "[]" represent closed interval
-                return new byte[]{(byte) byt};
-            } else{
-                return new byte[]{(byte)(0x80 + 1), byt};
+                return new byte[]{(byte) bytAry[0]};
+            } else {
+                return new byte[]{(byte) (0x80 + 1), bytAry[0]};
             }
         }
-        //Check if there is 2 bytes
-        if((byt >> 8 & 0xFF) != 0){
-            System.out.print("short byte" );
+        if (bytAry.length == 2) {
+            //Check if there is 2 bytes
+            //System.out.print("short byte");
             return new byte[]{
                 (byte) (0x80 + 2),//Prefix
-                (byte) (byt >> 8 & 0xFF),// shift the first byte, and check
-                (byte) byt// shit the last(small, according to big_endian), here
+                bytAry[0],
+                bytAry[1]
             };
         }
-        //Check for int 
-        if((byt & 0xFFFFFF) == byt){
-            System.out.print("int 3 byte" );
+        if (bytAry.length == 3) {
+            //Check for int 
+            //System.out.print("int 3 byte");
             return new byte[]{
                 (byte) (0x80 + 3),//Prefix
-                (byte) (byt >>> 16 & 0xFF),// shift the first byte, and fill zeros
-                (byte) (byt >>> 8 & 0xFF),
-                (byte) byt
+                bytAry[0],
+                bytAry[1],
+                bytAry[2]
             };
         }
-        if((byt & 0xFFFFFFFF) == byt){
+        if (bytAry.length == 4) {
             return new byte[]{
                 (byte) (0x80 + 4),//Prefix
-                (byte) (byt >>> 24 & 0xFF),// shift the first byte, and fill zeros
-                (byte) (byt >>> 16 & 0xFF),
-                (byte) (byt >>> 8 & 0xFF),
-                (byte) byt
+                bytAry[0],
+                bytAry[1],
+                bytAry[2],
+                bytAry[3]
             };
-        }
-        else{
+        } else {
             return new byte[]{};
         }
     }
-    //Test
-    /*public static void main(String args[]){
-        short a = 128; short shrt = 6550;
-        byte b = (byte) a;
-        byte[] c = encode(b);
-        for (int i = 0; i < c.length; i++){
-            System.out.print(c[i] + " " );
-        }
-    }*/
     
+    public static String byteAryToHex(byte[] byteAry){
+        final StringBuilder builder = new StringBuilder();
+        for(byte b : byteAry){
+            builder.append(String.format("%02x", b));
+        }
+        return builder.toString();
+    }
+
+    //Test
+    public static void main(String args[]) {
+        int a = 1024;
+        byte dst[] = null;
+        byte b[] = encode(int2byte(a));
+        System.out.println(byteAryToHex(b));
+    }
+
 }
